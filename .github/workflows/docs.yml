@@ -1,0 +1,28 @@
+name: Documentation verification
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+jobs:
+  docs:
+    name: docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Allow the native recovery probe to interrupt before verification
+        run: sleep 90
+      - name: Verify the requested documentation change
+        run: |
+          python3 - <<'PYCODE'
+          from pathlib import Path
+          content = Path('README.md').read_text()
+          assert 'Orchard CLI requires Node.js 22 or later.' in content
+          assert 'Node.js 18' not in content
+          assert 'Run `npm install` to install dependencies.' in content
+          assert 'Back up the workspace before running a migration.' in content
+          PYCODE
